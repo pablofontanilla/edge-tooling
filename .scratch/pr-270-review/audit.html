@@ -1,0 +1,263 @@
+<title>Two-Node Test Toolkit Review</title>
+<style>
+  :root{
+    --ink:#171a1f; --ink-soft:#52596b; --paper:#f3f5f7; --paper-raised:#ffffff;
+    --line:#dbe0e6; --accent:#1f6f78; --accent-soft:#e3f1f2;
+    --bug:#a63a37; --bug-soft:#fbe9e8;
+    --hygiene:#8f5c17; --hygiene-soft:#faf1e1;
+    --pushback:#2a6b44; --pushback-soft:#e7f5ec;
+    --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+    --sans:'IBM Plex Sans',system-ui,-apple-system,sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ink:#e6e9ee; --ink-soft:#a3aab8; --paper:#14171c; --paper-raised:#1b1f26;
+      --line:#2b313b; --accent:#6fc2c9; --accent-soft:#173338;
+      --bug:#e08683; --bug-soft:#3a1f1f;
+      --hygiene:#e0b064; --hygiene-soft:#3a2c14;
+      --pushback:#82d19f; --pushback-soft:#163823;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ink:#e6e9ee; --ink-soft:#a3aab8; --paper:#14171c; --paper-raised:#1b1f26;
+    --line:#2b313b; --accent:#6fc2c9; --accent-soft:#173338;
+    --bug:#e08683; --bug-soft:#3a1f1f;
+    --hygiene:#e0b064; --hygiene-soft:#3a2c14;
+    --pushback:#82d19f; --pushback-soft:#163823;
+  }
+
+  body{ background:var(--paper); color:var(--ink); font-family:var(--sans);
+        line-height:1.55; padding-inline:16px; }
+  .page{ max-width:760px; margin:0 auto; padding-block:32px 64px; }
+
+  a{ color:var(--accent); }
+  code, .loc{ font-family:var(--mono); font-size:0.86em; }
+
+  header.doc-head{ border-bottom:1px solid var(--line); padding-bottom:20px; margin-bottom:28px; }
+  .eyebrow{ font-family:var(--mono); font-size:0.75rem; letter-spacing:0.08em; text-transform:uppercase;
+            color:var(--accent); margin-bottom:8px; }
+  h1{ font-size:1.9rem; line-height:1.15; margin:0 0 10px; text-wrap:balance; font-weight:700; }
+  .dek{ color:var(--ink-soft); font-size:1.02rem; max-width:60ch; margin:0 0 16px; }
+
+  .meta{ display:flex; flex-wrap:wrap; gap:6px 18px; font-family:var(--mono); font-size:0.78rem;
+         color:var(--ink-soft); }
+  .meta b{ color:var(--ink); font-weight:600; }
+
+  .note{ background:var(--accent-soft); border:1px solid var(--line); border-radius:8px;
+         padding:14px 16px; font-size:0.92rem; color:var(--ink); margin:22px 0 30px; }
+  .note b{ color:var(--accent); }
+
+  .stat-row{ display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+             gap:10px; margin:20px 0 34px; }
+  .stat{ background:var(--paper-raised); border:1px solid var(--line); border-radius:10px;
+         padding:12px 14px; }
+  .stat .n{ font-family:var(--mono); font-size:1.35rem; font-weight:600; }
+  .stat .n.ok{ color:var(--pushback); }
+  .stat .l{ font-size:0.78rem; color:var(--ink-soft); margin-top:2px; }
+
+  h2{ font-size:1.25rem; margin:44px 0 6px; padding-top:4px; }
+  .section-dek{ color:var(--ink-soft); font-size:0.92rem; margin:0 0 18px; max-width:64ch; }
+
+  table{ width:100%; border-collapse:collapse; font-size:0.88rem; margin:10px 0 8px; }
+  .tbl-wrap{ overflow-x:auto; }
+  th,td{ text-align:left; padding:7px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th{ font-family:var(--mono); font-size:0.72rem; text-transform:uppercase; letter-spacing:0.04em;
+      color:var(--ink-soft); font-weight:600; }
+  td code{ background:var(--paper); padding:1px 5px; border-radius:4px; }
+
+  .finding{ background:var(--paper-raised); border:1px solid var(--line); border-left:3px solid var(--line);
+            border-radius:8px; padding:14px 16px 15px; margin-bottom:12px; }
+  .finding.bug{ border-left-color:var(--bug); }
+  .finding.hygiene{ border-left-color:var(--hygiene); }
+  .finding.pushback{ border-left-color:var(--pushback); }
+
+  .tag{ display:inline-block; font-family:var(--mono); font-size:0.68rem; letter-spacing:0.05em;
+        text-transform:uppercase; padding:2px 7px; border-radius:4px; font-weight:600; margin-bottom:8px; }
+  .bug .tag{ background:var(--bug-soft); color:var(--bug); }
+  .hygiene .tag{ background:var(--hygiene-soft); color:var(--hygiene); }
+  .pushback .tag{ background:var(--pushback-soft); color:var(--pushback); }
+
+  .finding h3{ font-size:1.02rem; margin:0 0 6px; }
+  .finding p{ margin:0 0 8px; font-size:0.93rem; }
+  .finding p:last-of-type{ margin-bottom:0; }
+  .locs{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  .locs code{ background:var(--paper); border:1px solid var(--line); padding:2px 7px; border-radius:5px; }
+
+  .verdict{ font-size:1.02rem; margin:0 0 18px; }
+  .verdict b{ color:var(--accent); }
+
+  footer{ margin-top:52px; padding-top:16px; border-top:1px solid var(--line);
+          font-size:0.8rem; color:var(--ink-soft); }
+</style>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+
+<div class="page">
+
+  <header class="doc-head">
+    <div class="eyebrow">Branch audit &middot; edge-tooling</div>
+    <h1>Two-Node Test Toolkit Review</h1>
+    <p class="dek">Findings from auditing <code>claude/pr-270-branch-merge-kfzb68</code>, the fork branch that mirrors upstream PR&nbsp;#270, before it moves toward merge.</p>
+    <div class="meta">
+      <span><b>Repo</b> pablofontanilla/edge-tooling</span>
+      <span><b>Tracks</b> openshift-eng/edge-tooling#270</span>
+      <span><b>Merge-base</b> 007eefb (main)</span>
+      <span><b>Branch head</b> d3dd215</span>
+      <span><b>Audited</b> 2026-09-16</span>
+    </div>
+  </header>
+
+  <div class="note">
+    <b>Purpose of this document.</b> Working notes assembled for pasting into a GitHub review on PR&nbsp;#270 in a follow-up session. Findings are organized as verified functional bugs, repo-hygiene items, and places to push back on the automated review rather than comply with it.
+  </div>
+
+  <p class="verdict">
+    The branch is lint-clean but <b>not merge-ready</b>. Upstream PR&nbsp;#270 ("Generalized test helpers.", by jaypoulz) is still a <b>Draft</b> with all 52 CodeRabbit review threads unresolved — but a third of those findings are already stale against the current head, fixed by later commits (<code>Shellcheck fixes</code>, <code>Hardening captures</code>, <code>Zero-test protection</code>). What the PR needs now is triage of the existing feedback, not more scope.
+  </p>
+
+  <div class="stat-row">
+    <div class="stat"><div class="n ok">0</div><div class="l">shellcheck findings (default + style, 26 scripts)</div></div>
+    <div class="stat"><div class="n ok">0</div><div class="l">markdownlint issues (repo config, 3 files)</div></div>
+    <div class="stat"><div class="n">4 / 26</div><div class="l">capture scripts missing the executable bit</div></div>
+    <div class="stat"><div class="n">52</div><div class="l">CodeRabbit threads open, 0 resolved</div></div>
+  </div>
+
+  <h2>Functional bugs to fix before merge</h2>
+  <p class="section-dek">Verified by reading the scripts directly, not from the bot's findings.</p>
+
+  <div class="finding bug">
+    <span class="tag">Bug</span>
+    <h3>Failed runs still exit 0</h3>
+    <p><code>run-test.sh</code> records <code>FAIL(&hellip;)</code> in <code>summary.tsv</code> and then exits 0 regardless. The batch loop in <code>run-suite.sh</code> does the same. Any <code>--repeat 3</code> automation or CI step chained with <code>&amp;&amp;</code> reports success after a failed recovery test.</p>
+    <div class="locs"><code>run-test.sh:458</code><code>run-suite.sh:516</code></div>
+  </div>
+
+  <div class="finding bug">
+    <span class="tag">Bug</span>
+    <h3>The profile refactor broke the result helpers</h3>
+    <p><code>check-latest-run.sh</code> and <code>summarize-all-runs.sh</code> only look for <code>openshift-two-node-suite-*</code> directories. <code>run-suite.sh</code> now names sessions <code>&lt;profile&gt;-suite-*</code>, and <code>run-test.sh</code> defaults to <code>tnf-two-node-*</code>. The README's own quick-start commands produce runs these helpers can't find. Match on the presence of <code>summary.tsv</code> instead of a name prefix.</p>
+    <div class="locs"><code>check-latest-run.sh:13</code><code>summarize-all-runs.sh:20</code><code>run-suite.sh:176</code></div>
+  </div>
+
+  <div class="finding bug">
+    <span class="tag">Bug</span>
+    <h3><code>run-test.sh</code> hardcodes the two-node suite</h3>
+    <p>Both invocations of the test binary run <code>openshift/two-node</code> unconditionally. Interactive mode in <code>run-suite.sh</code> dispatches every profile through <code>run-test.sh</code>, so <code>--interactive</code> with <code>e2e</code>, <code>dualreplica</code>, or <code>cert-rotation</code> silently runs the wrong suite and matches nothing. The README recipe piping <code>list-tests.sh --command-line</code> into <code>run-test.sh</code> hits the same wall. Needs a <code>--suite</code> flag.</p>
+    <div class="locs"><code>run-test.sh:356</code><code>run-test.sh:414</code><code>run-suite.sh:566</code></div>
+  </div>
+
+  <div class="finding bug">
+    <span class="tag">Bug</span>
+    <h3>Two captures ignore <code>CAPTURE_LOG_DIR</code></h3>
+    <p><code>capture-virsh-status.sh</code> and <code>capture-baremetal-operator.sh</code> hardcode <code>scripts/debug</code> while <code>run-all-captures.sh</code> reports the file as living in the run directory. <code>run-all-captures.sh</code> also never exports its own computed <code>LOG_DIR</code> as <code>CAPTURE_LOG_DIR</code>, so the documented standalone usage of these two scripts scatters output outside every run.</p>
+    <div class="locs"><code>capture-virsh-status.sh:12</code><code>capture-baremetal-operator.sh:12</code><code>run-all-captures.sh:34-39</code></div>
+  </div>
+
+  <div class="finding bug">
+    <span class="tag">Bug</span>
+    <h3>Same-day session reuse is fragile</h3>
+    <p>A new invocation merges into any existing same-day session directory with a matching name, and iteration numbering restarts at 1 — colliding rows in <code>summary.tsv</code>. A suite crossing UTC midnight splits into two sessions instead. <code>run-suite.sh</code> should create the directory once and pass it down explicitly.</p>
+    <div class="locs"><code>run-test.sh:291</code></div>
+  </div>
+
+  <h2>Hygiene and repo conventions</h2>
+  <p class="section-dek">Not bugs on their own, but the kind of debt that makes the next PR harder to review.</p>
+
+  <div class="finding hygiene">
+    <span class="tag">Hygiene</span>
+    <h3>"Generalized helpers" that the main runner doesn't use</h3>
+    <p><code>run-test.sh</code> reimplements <code>ts</code>, <code>log</code>, <code>sanitize_name</code>, <code>matches_stop_pattern</code>, hypervisor setup, and monitor config instead of sourcing <code>test-helpers.sh</code>. Separately, <code>resolve_master_ip_from_leases</code> is copy-pasted into five capture scripts, and the copies have already diverged: the "Hardening captures" commit added SSH keepalive/BatchMode options to three of them but missed two, which will hang instead of reconnecting on a half-open hypervisor hop.</p>
+    <div class="locs"><code>run-test.sh</code><code>capture-disruption-evidence.sh:25</code><code>capture-ovn-chassis-trace.sh:49</code></div>
+  </div>
+
+  <div class="finding hygiene">
+    <span class="tag">Hygiene</span>
+    <h3>Inconsistent extra-args and filter handling</h3>
+    <p><code>run-suite.sh</code> was fixed to read <code>OPENSHIFT_TESTS_EXTRA_ARGS</code> into an array, but <code>run-test.sh</code> still expands it unquoted with the shellcheck warning suppressed. Separately, test discovery filters case-insensitively while the actual run in <code>run-suite.sh</code> passes the same pattern to a case-sensitive flag — the "Found N tests" count can disagree with what executes.</p>
+    <div class="locs"><code>run-test.sh:365</code><code>run-suite.sh:440</code><code>run-suite.sh:454</code></div>
+  </div>
+
+  <div class="finding hygiene">
+    <span class="tag">Hygiene</span>
+    <h3>Missing executable bit on four capture scripts</h3>
+    <p>They currently work only because <code>run-all-captures.sh</code> always invokes them via <code>bash script.sh</code> rather than directly.</p>
+    <div class="locs"><code>capture-network-node-identity-follow-logs.sh</code><code>capture-ovn-chassis-trace.sh</code><code>capture-ovn-control-plane-follow-logs.sh</code><code>capture-ovn-kubernetes-follow-logs.sh</code></div>
+  </div>
+
+  <div class="finding hygiene">
+    <span class="tag">Hygiene</span>
+    <h3>Documentation drift</h3>
+    <p>The README's quick-start shows a positional argument <code>run-test.sh</code> actually rejects. Both profile tables omit the <code>ra-verification</code> profile that <code>test-helpers.sh</code> defines. <code>RECOVERY-TESTS-README.md</code> and several script headers still say <code>scratch/runs</code> / <code>scratch/tests-bin</code> instead of the actual <code>runs/</code> / <code>tests-bin/</code>. Two different binary-extraction recipes are documented side by side. The <code>cert-rotation</code> and <code>upgrade</code> profiles ship marked "runtime-verify" — an admission the suite names were never actually checked against a cluster.</p>
+  </div>
+
+  <div class="finding hygiene">
+    <span class="tag">Hygiene</span>
+    <h3>Tool isn't registered per <code>CONTRIBUTING.md</code></h3>
+    <p>No row in the root <code>AGENTS.md</code> or <code>README.md</code>, and <code>openshift-tests</code> is missing from the <code>DOCUMENTED_TOOLS</code> array in <code>.claude/hooks/detect-new-tools.sh</code>. Once merged, the session-start hook will flag it as undocumented for every future contributor — the same hook already flags <code>gh-notifier</code>, <code>images</code>, <code>proposals</code>, and <code>watchman</code> on <code>main</code> today.</p>
+  </div>
+
+  <div class="finding hygiene">
+    <span class="tag">Hygiene</span>
+    <h3>Commit hygiene</h3>
+    <p>Three commits carry a <code>Co-Authored-By: Claude Opus 4.6</code> trailer that CodeRabbit's AI-attribution check flags, and none follow the repo's <code>&lt;type&gt;(&lt;scope&gt;):</code> convention. Since the PR is still a draft, squash into a handful of conventional commits (e.g. <code>feat(openshift-tests): &hellip;</code>) before requesting review.</p>
+    <div class="locs"><code>6f52d1e</code><code>aa67e62</code><code>9356bdc</code></div>
+  </div>
+
+  <h2>Where to push back on CodeRabbit</h2>
+  <p class="section-dek">All 52 threads are open and unresolved. Not all of them describe a real problem for this tool's actual threat model.</p>
+
+  <div class="finding pushback">
+    <span class="tag">Push back</span>
+    <h3>"Injection vectors" is overstated as a blocking severity</h3>
+    <p>Every interpolated value is the operator's own environment — <code>HYPERVISOR_IP</code>, <code>MASTER_SSH_USER</code>, and lease-resolved IPs that already pass through an address-shaped regex in <code>resolve_master_ip_from_leases</code>. Reply with that reasoning rather than rewriting the SSH layer. One real concession closes the thread cheaply: the explicit <code>MASTER_0_IP</code>/<code>MASTER_1_IP</code> overrides bypass that regex entirely and should be validated against it too.</p>
+  </div>
+
+  <div class="finding pushback">
+    <span class="tag">Push back</span>
+    <h3>"Sensitive data in logs" describes the tool's purpose</h3>
+    <p>Capturing raw cluster and host logs for diagnosis is what this tool exists to do, and every capture already lands under a gitignored <code>runs/</code> directory (<code>runs/</code>, <code>tests-bin/</code>, <code>scripts/debug/</code>, <code>*.log</code> in <code>.gitignore</code>). State that explicitly in the PR description rather than building a sanitization pipeline.</p>
+  </div>
+
+  <div class="finding pushback">
+    <span class="tag">Push back</span>
+    <h3><code>StrictHostKeyChecking=no</code> is a defensible default here</h3>
+    <p>Flagged across five capture scripts. The hypervisor is an ephemeral EC2 instance whose host key changes on every redeploy, and the two-node-toolbox deploy pattern doesn't give operators a stable key to pin in advance. <code>accept-new</code> on the outer (local-to-hypervisor) hop is the honest middle ground: it pins the key for the session without ever prompting. The inner hop already uses <code>UserKnownHostsFile=/dev/null</code> against masters that are provisioned fresh on every run, so leave it as-is.</p>
+  </div>
+
+  <div class="finding pushback">
+    <span class="tag">Push back</span>
+    <h3>The <code>proxy.env</code> sourcing finding needs a correction</h3>
+    <p>CodeRabbit's finding treats missing <code>set -a</code> as a bug on the assumption that this repo controls the file's format. It doesn't: <code>proxy.env</code> is generated by the <code>two-node-toolbox</code> submodule. Checked directly against upstream <code>two-node-toolbox</code> at its current <code>main</code> (commit <code>ce6ed9e</code>) — not the 160-commits-stale copy vendored in this repo — the generator still writes every variable with <code>export</code>, and the toolbox's own consumers (<code>oc-wrapper.sh</code>, <code>deploy/common.sh</code>, its documented Claude command workflows) rely on a plain <code>source proxy.env</code>. The export contract is load-bearing for the toolbox itself, so it isn't a property this PR can quietly assume away, and a defensive wrapper here wouldn't protect against it changing anyway.</p>
+    <p>That said, the branch does source <code>proxy.env</code> at five separate call sites using two different conventions — plain <code>source</code> in three, <code>set -a</code>/<code>set +a</code> in two — which is worth fixing for consistency, on its own terms rather than CodeRabbit's. Recommended fix: consolidate all five sites into <code>test-helpers.sh</code>'s <code>load_proxy_env</code>, standardize on <code>set -a</code> to match the two sites that already use it, and add a post-source assertion that <code>KUBECONFIG</code> and <code>EC2_PUBLIC_IP</code> actually got set — two capture scripts already half-do this via <code>oc whoami</code> and a healthz probe. That catches real drift in the upstream format directly, instead of masking the dependency behind an export flag that gives no signal if the toolbox's contract ever changes.</p>
+    <p>One concrete cost of the coupling is worth naming separately, since nobody has: the generated file prints two informational lines and runs a kubeconfig-existence check every time it's sourced, and every capture script that sources it leaks that chatter into its evidence log.</p>
+    <div class="locs"><code>test-helpers.sh:63-69</code><code>run-test.sh</code><code>extract-tests-binary.sh</code><code>capture-update-setup-job.sh</code></div>
+  </div>
+
+  <div class="finding pushback">
+    <span class="tag">Push back</span>
+    <h3>Missing <code>set -e</code> in the reconnect-loop scripts is intentional</h3>
+    <p>In <code>capture-ovn-kubernetes-follow-logs.sh</code>, <code>capture-ovn-control-plane-follow-logs.sh</code>, <code>capture-network-node-identity-follow-logs.sh</code>, and <code>capture-ovn-chassis-trace.sh</code>, every foreground command is expected to fail — an <code>oc logs -f</code> ends the moment its pod is deleted, which is the normal case during a recovery test, not an error. Keep <code>set -uo pipefail</code> only, and add a one-line comment stating why, which also satisfies <code>CONTRIBUTING.md</code>'s intent without adopting the letter of the rule blindly.</p>
+  </div>
+
+  <div class="finding pushback">
+    <span class="tag">Push back</span>
+    <h3>Consolidate, don't fix seven times over</h3>
+    <p>Poll-interval numeric validation is flagged as a separate finding on seven different scripts. One <code>require_positive_int</code> helper added to <code>test-helpers.sh</code> and called from each poll loop closes all seven at once. Similarly, the 80% docstring-coverage warning is a Python-oriented metric and isn't meaningful for bash scripts documented through header comments — note that in the PR description rather than writing docstring-shaped comments to game the number.</p>
+  </div>
+
+  <h2>Tooling status</h2>
+  <div class="tbl-wrap">
+  <table>
+    <tr><th>Check</th><th>Tool</th><th>Result</th></tr>
+    <tr><td>Shell lint, default severity</td><td>shellcheck 0.11.0, 26 scripts</td><td>Clean</td></tr>
+    <tr><td>Shell lint, style severity</td><td>shellcheck 0.11.0 <code>-S style</code>, 26 scripts</td><td>Clean</td></tr>
+    <tr><td>Markdown lint</td><td>markdownlint-cli2 v0.23.2, repo config, 3 files</td><td>Clean</td></tr>
+    <tr><td>Executable bit</td><td><code>git ls-tree</code> mode check</td><td>4 of 26 scripts non-executable</td></tr>
+  </table>
+  </div>
+
+  <footer>
+    Prepared for use as review content on <a href="https://github.com/openshift-eng/edge-tooling/pull/270">openshift-eng/edge-tooling#270</a>. Line references are against branch head <code>d3dd215</code> and will drift if the branch moves before this is posted &mdash; re-verify file:line pairs at that time.
+  </footer>
+
+</div>
