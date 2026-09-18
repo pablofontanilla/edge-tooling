@@ -11,6 +11,7 @@ Automation, AI skills, and deployment tools for OpenShift edge engineering. This
 | Single Node OpenShift with DU config | [sno-deploy/](sno-deploy/) |
 | LVM Operator development workspace | [environments/lvm-operator/](environments/lvm-operator/) |
 | Nightly payload health monitoring | [payload-monitor/](payload-monitor/) |
+| Run `openshift-tests` suites against a TNF cluster with log captures | [openshift-tests/](openshift-tests/) |
 | Component Readiness triage report (HA vs edge) | [ci-tooling/readiness-report/](ci-tooling/readiness-report/) |
 | Multi-repo workspace management | [workspace plugin](plugins/workspace/) via the marketplace |
 | Claude Code plugins for edge workflows | [plugins/](plugins/) via the marketplace |
@@ -71,6 +72,7 @@ Then enable whichever plugins you need. See the [plugin README](plugins/README.m
 | [ec2-deploy/](ec2-deploy/) | Spin up EC2 instances for development and hypervisor use |
 | [sno-deploy/](sno-deploy/) | Deploy Single Node OpenShift with DU configuration |
 | [payload-monitor/](payload-monitor/) | Nightly payload health monitoring for edge topologies |
+| [openshift-tests/](openshift-tests/) | Run and debug `openshift-tests` suites (recovery, DualReplica, upgrade, …) on TNF clusters |
 | [environments/lvm-operator/](environments/lvm-operator/) | Development workspace for the LVM Storage operator |
 
 ## CI Tools

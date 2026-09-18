@@ -25,6 +25,7 @@ DOCUMENTED_TOOLS=(
     "ec2-deploy"
     "sno-deploy"
     "payload-monitor"
+    "openshift-tests"
     "ci-tooling"
     "ci-tooling/readiness-report"
     "environments/lvm-operator"

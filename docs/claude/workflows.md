@@ -29,3 +29,15 @@ Snapshot HA vs edge topology regressions from Sippy (TNF, TNA, SNO). Requires Go
 4. List views for a release: `go run ./cmd -list-views -release 4.22`
 
 See [ci-tooling/readiness-report/README.md](../../ci-tooling/readiness-report/README.md) for flags and output columns. For nightly payload health (blocking jobs, Prow, JIRA), use [payload-monitor](../../payload-monitor/).
+
+## openshift-tests on a TNF Cluster
+
+Run recovery, DualReplica, cert-rotation, conformance, or upgrade suites against a deployed Two-Node with Fencing cluster and capture cluster-side logs while they run.
+
+1. `export PROXY_ENV=<two-node-toolbox>/deploy/openshift-clusters/proxy.env`
+2. `cd openshift-tests && scripts/extract-tests-binary.sh`
+3. Whole suite: `scripts/run-suite.sh --profile recovery` (add `--with-captures` for diagnostics)
+4. Single test, repeated: `scripts/run-test.sh --test "<name>" --repeat 3 --stop-on-fail`
+5. Results: `runs/<session>/summary.tsv`; clean with `scripts/clean-test-runs.sh --keep 5`
+
+See [openshift-tests/docs/USER-GUIDE.md](../../openshift-tests/docs/USER-GUIDE.md) for flags, profiles, and troubleshooting, and [DEVELOPER-GUIDE.md](../../openshift-tests/docs/DEVELOPER-GUIDE.md) to extend the scripts.

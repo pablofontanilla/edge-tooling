@@ -2,6 +2,10 @@
 
 Generic infrastructure for running OpenShift test suites interactively or in batch.
 
+> These are the original usage notes. The maintained documentation is the
+> [User Guide](../docs/USER-GUIDE.md) and [Developer Guide](../docs/DEVELOPER-GUIDE.md);
+> where they disagree, the guides win.
+
 ## Quick Start
 
 ```bash
@@ -142,7 +146,7 @@ Run one or more recovery tests with optional diagnostic captures.
 - Iterations via `--repeat N`
 - Optional captures with `--with-captures` / `--no-captures`
 - Stop on error pattern matching
-- Organized output in `scratch/runs/`
+- Organized output in `runs/` (under `openshift-tests/`)
 
 **Usage:**
 
@@ -183,7 +187,7 @@ Extract openshift-tests binary from cluster payload.
 ./extract-tests-binary.sh
 ```
 
-Extracts the `tests` image from your cluster's current release and pulls the openshift-tests binary to `scratch/tests-bin/`.
+Extracts the `tests` image from your cluster's current release and pulls the openshift-tests binary to `tests-bin/`.
 
 ## Common Workflows
 
@@ -248,10 +252,10 @@ When you need full diagnostics for analysis:
 
 ## Output Structure
 
-Results are stored in `scratch/runs/`:
+Results are stored in `runs/` (under `openshift-tests/`):
 
 ```text
-scratch/runs/
+openshift-tests/runs/
 └── session-name-TIMESTAMP/
     ├── summary.tsv                         # Tab-separated summary
     ├── iter-01-test-01-TIMESTAMP-test-name/
@@ -274,13 +278,13 @@ All scripts use `test-helpers.sh` for binary discovery.
 **Binary search order:**
 
 1. `OPENSHIFT_TESTS` env var (explicit override)
-2. `scratch/tests-bin/openshift-tests` (local)
+2. `tests-bin/openshift-tests` (local, under `openshift-tests/`)
 3. `~/.cache/openshift-tests/openshift-tests` (shared cache)
 
 **Extract binary:**
 
 ```bash
-# To scratch/tests-bin (recommended - shared with existing scripts)
+# To tests-bin (recommended - shared with existing scripts)
 cd <repo>/openshift-tests
 oc adm release extract --tools --command=openshift-tests --to=tests-bin
 
