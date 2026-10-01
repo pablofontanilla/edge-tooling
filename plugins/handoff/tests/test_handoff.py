@@ -19,6 +19,7 @@ import sys
 import tempfile
 import time
 import unittest
+from datetime import datetime, timedelta
 from pathlib import Path
 
 SCRIPT = Path(__file__).resolve().parent.parent / "scripts" / "handoff.py"
@@ -144,6 +145,82 @@ class TestRead(HandoffFixture):
         self.assertEqual(self.run_handoff("read").stdout, "")
 
 
+class TestArm(HandoffFixture):
+
+    def arm_with(self, *flags: str) -> dict:
+        return json.loads(self.run_handoff("arm", *flags).stdout)
+
+    def expiry(self, path: Path) -> datetime:
+        header = path.read_text().splitlines()[1]
+        self.assertTrue(header.startswith("expires_at: "), header)
+        return datetime.fromisoformat(header.split(": ", 1)[1])
+
+    def test_default_ttl_stamps_header_and_keeps_body(self):
+        path = self.arm()
+        out = self.arm_with()
+        self.assertEqual(out["status"], "ok")
+        delta = self.expiry(path) - datetime.now().astimezone()
+        self.assertAlmostEqual(delta.total_seconds(), 3600, delta=120)
+        self.assertTrue(path.read_text().endswith(NOTE))
+
+    def test_ttl_minutes(self):
+        path = self.arm()
+        out = self.arm_with("--ttl-minutes", str(14 * 60))
+        self.assertEqual(out["expires_in"], "14 hours")
+        delta = self.expiry(path) - datetime.now().astimezone()
+        self.assertAlmostEqual(delta.total_seconds(), 14 * 3600, delta=120)
+
+    def test_until_clock_time_is_next_occurrence(self):
+        path = self.arm()
+        target = datetime.now().astimezone() - timedelta(hours=1)
+        self.arm_with("--until", target.strftime("%H:%M"))
+        delta = self.expiry(path) - datetime.now().astimezone()
+        self.assertGreater(delta.total_seconds(), 22 * 3600)
+        self.assertLess(delta.total_seconds(), 24 * 3600)
+
+    def test_until_iso_timestamp(self):
+        path = self.arm()
+        target = (datetime.now().astimezone() + timedelta(days=3)).replace(
+            second=0, microsecond=0)
+        self.arm_with("--until", target.isoformat())
+        self.assertEqual(self.expiry(path), target)
+
+    def test_rearm_replaces_header_instead_of_stacking(self):
+        path = self.arm()
+        self.arm_with("--ttl-minutes", "10")
+        self.arm_with("--ttl-minutes", "20")
+        self.assertEqual(path.read_text().count("expires_at"), 1)
+
+    def test_rejects_past_too_far_and_garbage(self):
+        path = self.arm()
+        past = (datetime.now().astimezone() - timedelta(hours=1)).isoformat()
+        for flags in (["--until", past],
+                      ["--ttl-minutes", str(8 * 24 * 60)],
+                      ["--until", "tomorrow-ish"]):
+            self.assertEqual(self.arm_with(*flags)["status"], "error", flags)
+        self.assertEqual(path.read_text(), NOTE)
+
+    def test_arm_without_note_errors(self):
+        self.assertEqual(self.arm_with()["status"], "error")
+
+    def test_armed_expiry_outlives_default_ttl(self):
+        path = self.arm()
+        self.arm_with("--ttl-minutes", str(14 * 60))
+        stamp = time.time() - 3 * 3600
+        os.utime(path, (stamp, stamp))
+        ctx = json.loads(self.run_handoff("read").stdout)[
+            "hookSpecificOutput"]["additionalContext"]
+        self.assertIn("run the e2e", ctx)
+        self.assertNotIn("expires_at", ctx)
+
+    def test_armed_expiry_in_past_does_not_fire(self):
+        path = self.arm()
+        past = (datetime.now().astimezone() - timedelta(minutes=5)).isoformat()
+        path.write_text(f"---\nexpires_at: {past}\n---\n\n{NOTE}")
+        self.assertEqual(self.run_handoff("read").stdout, "")
+        self.assertFalse(path.exists())
+
+
 class TestClear(HandoffFixture):
 
     def test_clear_removes_armed_note(self):
@@ -160,10 +237,10 @@ class TestClear(HandoffFixture):
 
 class TestHookManifest(unittest.TestCase):
 
-    def test_hook_runs_read_on_clear_only(self):
+    def test_hook_runs_read_on_startup_and_clear_only(self):
         hooks = json.loads((SCRIPT.parent.parent / "hooks" / "hooks.json").read_text())
         entries = hooks["hooks"]["SessionStart"]
-        self.assertEqual([e["matcher"] for e in entries], ["clear"])
+        self.assertEqual([e["matcher"] for e in entries], ["startup|clear"])
         self.assertIn("handoff.py\" read", entries[0]["hooks"][0]["command"])
 
 

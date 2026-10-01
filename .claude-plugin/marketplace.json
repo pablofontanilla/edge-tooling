@@ -45,7 +45,7 @@
     {
       "name": "handoff",
       "source": "./plugins/handoff",
-      "description": "Write a curated handoff note at a breaking point so the session after /clear resumes exactly where you left off, in any repo, with no workspace setup.",
+      "description": "Write a curated handoff note at a breaking point so the next session (after /clear or a relaunch) resumes where you left off, in any repo, with no workspace setup.",
       "version": "0.1.0"
     },
     {

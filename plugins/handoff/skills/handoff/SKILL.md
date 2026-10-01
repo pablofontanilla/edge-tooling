@@ -1,7 +1,7 @@
 ---
 name: handoff
-description: Use at a natural breaking point to write a handoff note so the session after /clear resumes exactly where this one stopped, in any repo, without the workspace plugin. Not for workspace projects, which use /workspace:handoff
-argument-hint: "[focus for the next session]"
+description: Use at a natural breaking point to write a handoff note so the next session (after /clear or a relaunch) resumes exactly where this one stopped, in any repo, without the workspace plugin. Not for workspace projects, which use /workspace:handoff
+argument-hint: "[focus and/or when you will resume]"
 user-invocable: true
 disable-model-invocation: true
 allowed-tools: Bash, Read, Write, AskUserQuestion
@@ -10,7 +10,8 @@ allowed-tools: Bash, Read, Write, AskUserQuestion
 # Hand Off a Session
 
 Write a note that lets a fresh session pick up this work cold, then arm it
-so the next `/clear` loads it automatically. The repo's CLAUDE.md already
+so the next `/clear` or fresh launch in this directory loads it
+automatically. The repo's CLAUDE.md already
 loads in every session; the note carries only what CLAUDE.md does not:
 this session's state, decisions, and next step.
 
@@ -34,7 +35,8 @@ Parse the JSON:
 - **`exists: true`** — a handoff is already armed for this directory. It is
   overwritten in Step 4; say so in the report.
 
-Keep `path` for Step 4.
+Keep `path`, `now`, `weekday`, `ttl_minutes` and `max_ttl_minutes` for
+Step 4.
 
 ### Step 2: Capture the Git State
 
@@ -49,9 +51,11 @@ detail the next session most often gets wrong, so record it exactly.
 
 ### Step 3: Compose the Note
 
-Write from this conversation, not from re-reading files. If `$ARGUMENTS`
-names a focus, make it the next task unless the conversation clearly
-contradicts it; say so if it does.
+Write from this conversation, not from re-reading files. `$ARGUMENTS` may
+carry a focus, a resume time ("tomorrow morning", "after lunch", "Monday"),
+or both. Make the focus the next task unless the conversation clearly
+contradicts it; say so if it does. The resume time is for Step 4, not the
+note.
 
 Use exactly this structure, and keep it under 60 lines:
 
@@ -86,8 +90,35 @@ at most five; never CLAUDE.md, which loads by itself.
 
 ### Step 4: Write and Arm
 
-Write the note to `path` from Step 1 with the Write tool. Writing it arms
-it: the hook keys freshness off the file's modification time.
+Write the note to `path` from Step 1 with the Write tool, then arm it.
+Choose the expiry from what the user said, with `now` and `weekday` from
+Step 1 as the reference:
+
+- **No timeframe mentioned** — run `arm` with no flag (default TTL,
+  normally 60 minutes).
+- **A duration** ("back in 3 hours") — `--ttl-minutes`, with about 25%
+  slack, rounded up.
+- **A point in time** — `--until`, set to the *end* of the window the user
+  named, not its start: a late resume should still find the note, and
+  the next session retires it anyway. "Tomorrow morning" → `12:00`;
+  "after lunch" → `17:00`; "tonight" → `23:59`; "tomorrow" → tomorrow
+  `23:59`. A day other than today or tomorrow ("Monday") → an ISO
+  timestamp at the end of that day, e.g. `2026-10-05T23:59`. `HH:MM` means
+  its next occurrence.
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/handoff.py" arm [--ttl-minutes N | --until HH:MM|ISO]
+```
+
+Parse the JSON:
+
+- **`status: "ok"`** — keep `expires_at` and `expires_in` for Step 6.
+- **`status: "error"`** — if the requested time is over `max_ttl_minutes`
+  (one week), tell the user the handoff cannot live that long and that a
+  stale note firing into an unrelated session is the risk it guards
+  against; offer the maximum or a manual paste of the note instead.
+  For any other error, show `message`; the note is on disk but unarmed
+  and expires after the default TTL.
 
 ### Step 5: Offer Durable Learnings
 
@@ -101,16 +132,18 @@ temporary.
 
 Tell the user, filling in the values:
 
-> Handoff armed for `<project_dir>`. Press `/clear` and the next session
-> resumes at `<next task>`. It expires after `<ttl_minutes>` minutes and
-> fires once. The note is at `<path>`; edit it before clearing if
-> anything is off.
+> Handoff armed for `<project_dir>` until `<expires_at>` (`<expires_in>`).
+> The next `/clear` or new session in this directory resumes at
+> `<next task>`, once. The note is at `<path>`; edit it before then if
+> anything is off, keeping its `expires_at` header.
 
 ## Examples
 
 ```text
 /handoff:handoff
 /handoff:handoff rerun the failing e2e with the new fixture
+/handoff:handoff we'll continue tomorrow morning     # arm --until 12:00
+/handoff:handoff back after a 2h meeting             # arm --ttl-minutes 150
 ```
 
 To disarm without clearing:
@@ -125,6 +158,7 @@ python3 "${CLAUDE_PLUGIN_ROOT}/scripts/handoff.py" clear
   writes inside the repository, never edits CLAUDE.md, never commits.
 - **Keyed by launch directory.** Each git worktree gets its own note. A
   note armed in one directory does not fire in another.
-- **Only `/clear` consumes it.** Quitting and relaunching does not. After
-  it fires, or expires, the note moves to `<key>.consumed.md` beside it,
-  so it can still be pasted by hand.
+- **`/clear` and fresh launches consume it**; `--resume`/`--continue` do
+  not, since those sessions already have their context. After it fires,
+  or expires, the note moves to `<key>.consumed.md` beside it, so it can
+  still be pasted by hand.
